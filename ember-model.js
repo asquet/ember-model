@@ -1784,12 +1784,18 @@ Ember.RESTAdapter = Ember.Adapter.extend({
     }
   },
 
-  _ajax: function(url, params, method, settings) {
-    settings = Ember.$.extend(settings, {
+  ajaxSettings: function(url, method) {
+    return {
       url: url,
       type: method,
       dataType: "json"
-    });
+    };
+  },
+
+  _ajax: function(url, params, method, settings) {
+    if (!settings) {
+      settings = this.ajaxSettings(url, method);
+    }
 
     return new Ember.RSVP.Promise(function(resolve, reject) {
       if (params) {
