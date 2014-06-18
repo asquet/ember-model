@@ -9,8 +9,8 @@ Ember.ManyArray = Ember.RecordArray.extend({
     var obj = get(this, 'content').findBy('clientId', record._reference.clientId);
     get(this, 'content').removeObject(obj);
 
-    var originalObj = get(this, 'originalContent').findBy('clientId', record._reference.clientId);
-    get(this, 'originalContent').removeObject(originalObj);
+    var originalObj = (get(this, 'originalContent') || []).findBy('clientId', record._reference.clientId);
+    if (originalObj) get(this, 'originalContent').removeObject(originalObj);
   },
 
   isDirty: function() {
