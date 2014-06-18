@@ -163,7 +163,7 @@ Ember.RESTAdapter = Ember.Adapter.extend({
         primaryKey = get(record.constructor, 'primaryKey'),
         dataToLoad = rootKey ? get(data, rootKey) : data;
     if (!Ember.isEmpty(dataToLoad)) {
-      record.load(dataToLoad[primaryKey], dataToLoad);
+      record.load(dataToLoad[primaryKey], dataToLoad, true);
     }
   }
 });

@@ -84,6 +84,18 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
     return content.findProperty('record', record);
   },
   
+  save : function(func) {
+	return Em.RSVP.all(this.get('content').map(function(item) {
+		if (func) {
+			return item.record.save().then(function() {
+				return Em.loadPromise(func(item.record));
+			});
+		} else {
+			return item.record.save();
+		}
+	}));
+  },
+  
   //--- reloaded ember-model methods
   
   objectAtContent : function(idx) {
@@ -243,7 +255,11 @@ Ember.Model
         var adapter = this.constructor.adapter;
         Ember.set(this, 'isSaving', true);
         if (Ember.get(this, 'isDeleted')) {
-          return this.deleteRecord(this);
+			if (Ember.get(this,'isNew')) {
+				this.constructor.unload(this)
+			} else {
+				return this.deleteRecord(this);
+			}
         } else if (Ember.get(this, 'isNew')) {
           return adapter.createRecord(this);
         } else if (Ember.get(this, 'isDirty')) {
@@ -257,6 +273,12 @@ Ember.Model
           return promise;
         }
       },
+	  
+	  suicideOnDelete : function() {
+		if (this.get('isDeleted') && this.get('isNew')) {
+			this.deleteRecord();
+		}
+	  }.observes('isDeleted'),
 	  
 	  revert: function() {
 		this.getWithDefault('_dirtyAttributes', []).clear();

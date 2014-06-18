@@ -106,13 +106,15 @@ Ember.Model = Ember.Object.extend(Ember.Evented, {
     return get(this, get(this.constructor, 'primaryKey'));
   },
 
-  load: function(id, hash) {
+  load: function(id, hash, keepHasManys) {
     var data = {};
     data[get(this.constructor, 'primaryKey')] = id;
     set(this, '_data', Ember.merge(data, hash));
     this.getWithDefault('_dirtyAttributes', []).clear();
 
-    this._reloadHasManys();
+	if (!keepHasManys) {
+		this._reloadHasManys();
+	}
 
     // eagerly load embedded data
     var relationships = this.constructor._relationships || [], meta = Ember.meta(this), relationshipKey, relationship, relationshipMeta, relationshipData, relationshipType;
@@ -380,12 +382,7 @@ Ember.Model = Ember.Object.extend(Ember.Evented, {
       }
       content = Ember.EnumerableUtils.map(content, mapFunction);
     } else if (this.get(primaryKey) && type.adapter.loadHasMany) {
-		var prevArray = (this._hasManyArrays||[]).findBy('key', key);//XXX dafuq am i doing???
-		if (prevArray) {
-			content = prevArray.content;
-		} else {
 			content = type.adapter.loadHasMany(this, key, type, collection);
-		}
     }
 
     return Ember.A(content || []);
