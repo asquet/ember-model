@@ -74,16 +74,17 @@ Ember.attr = function(type, options) {
         dataValue = data[dataKey] = value;
       }
 
-      if (dataValue !== serialize(value, type)) {
-        dirtyAttributes.pushObject(key);
-      } else {
-        dirtyAttributes.removeObject(key);
-      }
+      if (!options.nonDirtying) {
+        if (dataValue !== serialize(value, type)) {
+          dirtyAttributes.pushObject(key);
+        } else {
+          dirtyAttributes.removeObject(key);
+        }
 
-      if (createdDirtyAttributes) {
-        set(this, '_dirtyAttributes', dirtyAttributes);
+        if (createdDirtyAttributes) {
+          set(this, '_dirtyAttributes', dirtyAttributes);
+        }
       }
-
       return value;
     }
 
