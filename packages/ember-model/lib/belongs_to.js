@@ -52,15 +52,16 @@ Ember.belongsTo = function(type, options) {
                     [value.constructor, type]),
                     value instanceof type);
       }
+      if (!options || !options.nonDirtying) {
+        if (oldValue !== value) {
+          dirtyAttributes.pushObject(propertyKey);
+        } else {
+          dirtyAttributes.removeObject(propertyKey);
+        }
 
-      if (oldValue !== value) {
-        dirtyAttributes.pushObject(propertyKey);
-      } else {
-        dirtyAttributes.removeObject(propertyKey);
-      }
-
-      if (createdDirtyAttributes) {
-        set(this, '_dirtyAttributes', dirtyAttributes);
+        if (createdDirtyAttributes) {
+          set(this, '_dirtyAttributes', dirtyAttributes);
+        }
       }
 
       if (meta.options.embedded) {

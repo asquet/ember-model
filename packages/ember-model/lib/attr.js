@@ -74,7 +74,7 @@ Ember.attr = function(type, options) {
         dataValue = data[dataKey] = value;
       }
 
-      if (!options.nonDirtying) {
+      if (!options || !options.nonDirtying) {
         if (dataValue !== serialize(value, type)) {
           dirtyAttributes.pushObject(key);
         } else {
