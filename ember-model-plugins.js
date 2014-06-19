@@ -357,21 +357,9 @@ Ember.RESTAdapterExt = Ember.RESTAdapter
         return this.ajax(url, data, method || "GET");
       },
       
-      callRestOnObjectExt : function(record, action, method, data, settings) {
-        var primaryKey = get(record.constructor, 'primaryKey');
-        var url = this.buildURL(record.constructor, get(record, primaryKey)) + "/" + action;
-
-        settings = Em.$.extend(settings, {
-          url: url,
-          type: method
-        });
-
-        return this.ajax(url, data, method, settings);
-      },
-      
-      callRestOnClass : function(klazz, action, method, data, settings) {
+      callRestOnClass : function(klazz, action, method, data) {
         var url = this.buildURL(klazz) + "/" + action;
-        return this.ajax(url, data, method, settings);
+        return this.ajax(url, data, method || "GET");
       }
 
     });
@@ -386,17 +374,14 @@ Ember.Model.reopenClass({
 });
   
 Ember.Model.reopen({
-  callRestOnObject : function(action, method, data, settings) {
-    return this.constructor.adapter.callRestOnObject(this, action, method, data, settings);
-  },
-  callRestOnObjectExt: function(action, method, data, settings) {
-    return this.constructor.adapter.callRestOnObjectExt(this, action, method, data, settings);
-  }  
+  callRestOnObject : function(action, method) {
+    return this.constructor.adapter.callRestOnObject(this, action, method);
+  }
 });
 Ember.Model.reopenClass({
   
-  callRestOnClass : function(action, method, data, settings) {
-    return this.adapter.callRestOnClass(this, action, method, data, settings);
+  callRestOnClass : function(action, method, data) {
+    return this.adapter.callRestOnClass(this, action, method, data);
   }
 
 });
