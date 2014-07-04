@@ -15,9 +15,9 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 		item.record = that._materializeRecord(item);
 		Ember.addObserver(item, 'record.isDirty', that, 'recordStateChanged');
 		Ember.addObserver(item, 'record.isDeleted', that, 'recordStateChanged');
+		item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
 	  }
-      item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
-      
+
       if (!item.record.get('isDeleted')) {
         arrCnt.push(item);
       }
@@ -99,8 +99,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   saveSequential : function(func) {
 	var promise = new Em.RSVP.Promise(function(r){r();});
 	var content = this.get('content');
-	return function() {
-		return content.reduce(function(promise, item) {
+	return content.reduce(function(promise, item) {
 			return promise.then(function(){
 				if (func && !item.record.get('isDeleted')) {
 					return item.record.save().then(function() {
@@ -110,8 +109,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 					return item.record.save();
 				}
 			});
-		}, promise);
-	};
+	}, promise);
   },
   
   //--- reloaded ember-model methods
@@ -163,10 +161,22 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   /* dirtying */
   
   loadData : function(klass,data) {
-	//this.set('content', data);
-	klass.load(data);
-	this._setupOriginalContent(this.get('arrangedContent'));
-	this.load(data);	
+      for (var i=0; i<this.get('originalContent.length'); i++){
+          Ember.addObserver(this.get('originalContent')[i], 'record.isDirty', this, 'recordStateChanged');
+      }
+      klass.load(data);
+      var d=[];
+      for (var i=0; i<data.length; i++){
+          var item = data[i];
+          var ref = item._reference || klass._getOrCreateReferenceForId(Em.get(item, 'id'))
+
+          Ember.addObserver(ref, 'record.isDirty', this, 'recordStateChanged');
+          Ember.addObserver(ref, 'record.isDeleted', this, 'recordStateChanged');
+          d.push(ref);
+      }
+
+      this._setupOriginalContent(d);
+      this.load(d);
   },
   
   arrayWillChange: function(item, idx, removedCnt, addedCnt) {
