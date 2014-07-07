@@ -19,6 +19,10 @@ Ember.Model.reopenClass({
 				this.set(fakePropname, value);
 				return value;
 			} else {
+				if (typeof this.get(Em.get(this.constructor,'primaryKey')) === "undefined") {
+					return undefined;
+				}
+								
 				if (typeof(this.get(fakePropname))=='undefined') {
 					var that = this;
 					this.callRestOnObject(restFunc).then(function(res) {
