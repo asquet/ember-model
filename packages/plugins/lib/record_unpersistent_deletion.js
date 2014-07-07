@@ -15,8 +15,9 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 		item.record = that._materializeRecord(item);
 		Ember.addObserver(item, 'record.isDirty', that, 'recordStateChanged');
 		Ember.addObserver(item, 'record.isDeleted', that, 'recordStateChanged');
-		item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
+		Em.get(item, 'record.isDirty');
 	  }
+	  item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
 
       if (!item.record.get('isDeleted')) {
         arrCnt.push(item);
@@ -131,6 +132,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
       if (isDirtyRecord || isNewRecord) { this._modifiedRecords.pushObject(content[idx]); }
       Ember.addObserver(content[idx], 'record.isDirty', this, 'recordStateChanged');
 	  Ember.addObserver(content[idx], 'record.isDeleted', this, 'recordStateChanged');
+	  Em.get(content[idx], 'record.isDirty');
       record.registerParentHasManyArray(this);
     }
 
@@ -161,8 +163,9 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   /* dirtying */
   
   loadData : function(klass,data) {
-      for (var i=0; i<this.get('originalContent.length'); i++){
-          Ember.addObserver(this.get('originalContent')[i], 'record.isDirty', this, 'recordStateChanged');
+	  for (var i=0; i<this.get('content.length'); i++){
+          Ember.removeObserver(this.get('originalContent')[i], 'record.isDirty', this, 'recordStateChanged');
+          Ember.removeObserver(this.get('originalContent')[i], 'record.isDeleted', this, 'recordStateChanged');
       }
       klass.load(data);
       var d=[];
@@ -172,6 +175,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 
           Ember.addObserver(ref, 'record.isDirty', this, 'recordStateChanged');
           Ember.addObserver(ref, 'record.isDeleted', this, 'recordStateChanged');
+		  Em.get(ref, 'record.isDirty');
           d.push(ref);
       }
 
@@ -204,6 +208,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
         if (isDirtyRecord || isNewRecord) { this._modifiedRecords.pushObject(currentItem); }
         Ember.addObserver(currentItem, 'record.isDirty', this, 'recordStateChanged');
 		Ember.addObserver(currentItem, 'record.isDeleted', this, 'recordStateChanged');
+		Em.get(currentItem, 'record.isDirty');
         currentItem.record.registerParentHasManyArray(this);
       }
     }
