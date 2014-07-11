@@ -16,8 +16,8 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 		Ember.addObserver(item, 'record.isDirty', that, 'recordStateChanged');
 		Ember.addObserver(item, 'record.isDeleted', that, 'recordStateChanged');
 		Em.get(item, 'record.isDirty');
+		item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
 	  }
-	  item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
 
       if (!item.record.get('isDeleted')) {
         arrCnt.push(item);
@@ -65,16 +65,31 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   },
   
   addObject : function(obj) {
-    if (!obj.record) {obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'))}//TODO change id to "get primary key"
+    if (!obj.record) {
+		obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'));
+		Ember.addObserver(obj, 'record.isDirty', this, 'recordStateChanged');
+		Ember.addObserver(obj, 'record.isDeleted', this, 'recordStateChanged');
+		Em.get(obj, 'record.isDirty');
+		
+	}//TODO change id to "get primary key"
     this.get('content').addObject(obj);
   },
   pushObject : function(obj) {
-    if (!obj.record) {obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'))}//TODO change id to "get primary key"
+    if (!obj.record) {
+		obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'))
+		Ember.addObserver(obj, 'record.isDirty', this, 'recordStateChanged');
+		Ember.addObserver(obj, 'record.isDeleted', this, 'recordStateChanged');
+		Em.get(obj, 'record.isDirty');
+	}//TODO change id to "get primary key"
     this.get('content').pushObject(obj);
   },
   
   removeObject : function(obj) {
-	if (!obj.record) {obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'))}//TODO change id to "get primary key"
+	if (!obj.record) {
+		obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'));
+		Ember.removeObserver(obj, 'record.isDirty', this, 'recordStateChanged');
+		Ember.removeObserver(obj, 'record.isDeleted', this, 'recordStateChanged');
+	}//TODO change id to "get primary key"
     this.get('content').removeObject(obj);
   },
   
@@ -164,8 +179,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   
   loadData : function(klass,data) {
 	  for (var i=0; i<this.get('content.length'); i++){
-          Ember.removeObserver(this.get('originalContent')[i], 'record.isDirty', this, 'recordStateChanged');
-          Ember.removeObserver(this.get('originalContent')[i], 'record.isDeleted', this, 'recordStateChanged');
+		  this.removeObject(this.get('content')[i]);
       }
       klass.load(data);
       var d=[];
