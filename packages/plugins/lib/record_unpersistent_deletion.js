@@ -16,8 +16,8 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 		Ember.addObserver(item, 'record.isDirty', that, 'recordStateChanged');
 		Ember.addObserver(item, 'record.isDeleted', that, 'recordStateChanged');
 		Em.get(item, 'record.isDirty');
-		item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
 	  }
+	  item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
 
       if (!item.record.get('isDeleted')) {
         arrCnt.push(item);
@@ -346,3 +346,5 @@ Ember.Model
 	  }
 
     });
+	
+	
