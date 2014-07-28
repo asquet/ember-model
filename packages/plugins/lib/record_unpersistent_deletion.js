@@ -178,23 +178,26 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   /* dirtying */
   
   loadData : function(klass,data) {
-	  for (var i=0; i<this.get('content.length'); i++){
-		  this.removeObject(this.get('content')[i]);
-      }
-      klass.load(data);
-      var d=[];
-      for (var i=0; i<data.length; i++){
-          var item = data[i];
-          var ref = item._reference || klass._getOrCreateReferenceForId(Em.get(item, 'id'))
+    for (var i=0; i<this.get('content.length'); i++){
+      var obj = this.get('content')[i];
+      Ember.removeObserver(obj, 'record.isDirty', this, 'recordStateChanged');
+      Ember.removeObserver(obj, 'record.isDeleted', this, 'recordStateChanged');
+    }
 
-          Ember.addObserver(ref, 'record.isDirty', this, 'recordStateChanged');
-          Ember.addObserver(ref, 'record.isDeleted', this, 'recordStateChanged');
-		  Em.get(ref, 'record.isDirty');
-          d.push(ref);
-      }
+    klass.load(data);
+    var d=[];
+    for (var i=0; i<data.length; i++){
+      var item = data[i];
+      var ref = item._reference || klass._getOrCreateReferenceForId(Em.get(item, 'id'))
 
-      this._setupOriginalContent(d);
-      this.load(d);
+      Ember.addObserver(ref, 'record.isDirty', this, 'recordStateChanged');
+      Ember.addObserver(ref, 'record.isDeleted', this, 'recordStateChanged');
+      Em.get(ref, 'record.isDirty');
+      d.push(ref);
+    }
+
+    this._setupOriginalContent(d);
+    this.load(d);
   },
   
   arrayWillChange: function(item, idx, removedCnt, addedCnt) {
