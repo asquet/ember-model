@@ -73,8 +73,8 @@ Ember.RESTAdapterExt = Ember.RESTAdapter
     });
 
 Ember.Model.reopenClass({
-  adapter : Ember.RESTAdapterExt.create(),
-  isRequested : true,
+  //adapter : Ember.RESTAdapterExt.create(),
+  //isRequested : true,
   getDefaultRestUrl : function() {
     return this.toString().substring(this.toString().lastIndexOf('.') + 1)
         .decamelize() + 's';

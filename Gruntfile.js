@@ -13,7 +13,7 @@ module.exports = function(grunt) {
     release: config('release'),
     qunit: config('qunit'),
     build_test_runner_file: {
-      all: ['packages/ember-model/tests/**/*_test.js']
+      all: ['packages/ember-model/tests/**/*_test.js','packages/plugins/tests/**/*_test.js']
     },
     banner: config('banner'),
     strip: config('strip'),

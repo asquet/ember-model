@@ -112,9 +112,9 @@ Ember.Model = Ember.Object.extend(Ember.Evented, {
     set(this, '_data', Ember.merge(data, hash));
     this.getWithDefault('_dirtyAttributes', []).clear();
 
-	if (!keepHasManys) {
-		this._reloadHasManys();
-	}
+    if (!keepHasManys) {
+      this._reloadHasManys();
+    }
 
     // eagerly load embedded data
     var relationships = this.constructor._relationships || [], meta = Ember.meta(this), relationshipKey, relationship, relationshipMeta, relationshipData, relationshipType;
@@ -202,8 +202,8 @@ Ember.Model = Ember.Object.extend(Ember.Evented, {
         if (meta.kind === 'belongsTo') {
           data = this.serializeBelongsTo(key, meta);
         } else {
-          continue; //unknown property(like "chidrenIds:[1,2,3]") not supported by my server REST framework
-          //data = this.serializeHasMany(key, meta); //its here to pass tests
+          if (Ember.get(this,'isRequested')) continue; //unknown property(like "chidrenIds:[1,2,3]") not supported by my server REST framework
+          data = this.serializeHasMany(key, meta); //its here to pass tests
         }
 
         json[relationshipKey] = data;
@@ -238,17 +238,8 @@ Ember.Model = Ember.Object.extend(Ember.Evented, {
   },
 
   reload: function() {
-	this.getWithDefault('_dirtyAttributes', []).clear();
-
-/*	if (get(this, 'isRequested')) { //XXX consider removing
-		this._registerHasManyArray(); //TODO refactor to return RSVP.all for all hasManys and object itself
-		return this.constructor.reload(this.get(get(this.constructor, 'primaryKey')));
-	} else {
-		return this.constructor.reload(this.get(get(this.constructor, 'primaryKey')));
-	}
-*/
+    this.getWithDefault('_dirtyAttributes', []).clear();
     return this.constructor.reload(this.get(get(this.constructor, 'primaryKey')), this.container);
-
   },
 
   revert: function() {
@@ -381,8 +372,8 @@ Ember.Model = Ember.Object.extend(Ember.Evented, {
         mapFunction = function(id) { return type._getOrCreateReferenceForId(id); };
       }
       content = Ember.EnumerableUtils.map(content, mapFunction);
-    } else if (this.get(primaryKey) && type.adapter.loadHasMany) {
-			content = type.adapter.loadHasMany(this, key, type, collection);
+    } else if (this.get(primaryKey) && type.adapter.loadHasMany && !embedded) {
+      content = type.adapter.loadHasMany(this, key, type, collection);
     }
 
     return Ember.A(content || []);
@@ -570,12 +561,7 @@ Ember.Model.reopenClass({
   reload: function(id, container) {
     var record = this.cachedRecordForId(id, container);
     record.set('isLoaded', false);
-    return this._fetchById(record, id).then(function() {
-		if (record._hasManyArrays) {
-			record._hasManyArrays.forEach(function(item){item.set('content',null);});//clear hasManys, so that they would reload
-			record._reloadHasManys();
-		}
-	});
+    return this._fetchById(record, id);
   },
 
   _fetchById: function(record, id) {
@@ -619,7 +605,7 @@ Ember.Model.reopenClass({
     this._currentBatchRecordArrays = null;
     this._currentBatchDeferreds = null;
     
-    if (!batchIds) return;
+//    if (!batchIds) return;
     for (i = 0; i < batchIds.length; i++) {
       if (!this.cachedRecordForId(batchIds[i]).get('isLoaded')) {
         requestIds.push(batchIds[i]);
