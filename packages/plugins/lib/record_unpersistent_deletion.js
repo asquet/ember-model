@@ -227,7 +227,17 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   recordStateChanged: function(obj, keyName) {
     var parent = Em.get(this, 'parent'), relationshipKey = Em.get(this, 'relationshipKey');    
 
-    if (obj.record.get('isDirty') || obj.record.get('isDeleted')) {
+	if (obj.record.get('isDeleted')) {
+		if (Em.get(this, 'originalContent').indexOf(obj)>-1) {
+			if (this._modifiedRecords.indexOf(obj) === -1) { this._modifiedRecords.pushObject(obj); } 
+			parent._relationshipBecameDirty(relationshipKey);
+		} else {
+			if (this._modifiedRecords.indexOf(obj) > -1) { this._modifiedRecords.removeObject(obj); }
+			if (!this.get('isDirty')) {
+			  parent._relationshipBecameClean(relationshipKey); 
+			}
+		}
+	} else if (obj.record.get('isDirty')) {
       if (this._modifiedRecords.indexOf(obj) === -1) { this._modifiedRecords.pushObject(obj); }
       parent._relationshipBecameDirty(relationshipKey);
     } else {
@@ -241,7 +251,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   isDirty: function() {
     var originalContent = Em.get(this, 'originalContent'),
         originalContentLength = Em.get(originalContent, 'length'),
-        content = Em.get(this, 'arrangedContent'),
+        content = Em.get(this, 'content').rejectBy('record.isDeleted'),
         contentLength = Em.get(content, 'length');
 
 	if (!originalContent) return false;

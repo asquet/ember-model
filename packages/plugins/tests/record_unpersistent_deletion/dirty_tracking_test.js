@@ -50,8 +50,8 @@ test("when no properties have changed on a model, isDirty should be false", func
     ok(!obj.get('isDirty'), 'object with no changes is clean');
 });
 
-test("when new record added to hasManys, isDirty should be true", function() {
-    expect(3);
+test("adding and deleting old and new objects in  hasManys sets isDirty correctly", function() {
+    expect(6);
 
     var app = rud_dt_setup();
 
@@ -65,6 +65,14 @@ test("when new record added to hasManys, isDirty should be true", function() {
         var c = app.Comment.create({});
         obj.get('comments').addObject(c);
         ok(obj.get('isDirty'), 'object gets dirty by adding new child object');
+        c.set('isDeleted', true);
+        ok(!obj.get('isDirty'), 'object gets clean after deleting new object');
+
+        c = obj.get('comments.firstObject');
+        c.set('isDeleted', true);
+        ok(obj.get('isDirty'), 'object gets dirty by deleting existing child object');
+        c.set('isDeleted', false);
+        ok(!obj.get('isDirty'), 'object gets clean by restoring existing child object');
 
         clearTimeout(t);
         start();
