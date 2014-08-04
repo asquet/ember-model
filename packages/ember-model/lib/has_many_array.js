@@ -140,6 +140,8 @@ Ember.ManyArray = Ember.RecordArray.extend({
     content = content || get(this, 'content');
     if (content) {
       set(this, 'originalContent', content.slice());
+    } else {
+      set(this, 'originalContent', []);
     }
     set(this, '_modifiedRecords', []);
   },

@@ -94,3 +94,19 @@ test('get hasMany does not count records with isDeleted===true', function() {
         QUnit.start();
     });
 });
+
+test('hasMany for new object', function() {
+    var Comment = Em.Model.extend({
+        isRequested : true
+    });
+    var Post = Em.Model.extend({
+        isRequested : true,
+        comments : Em.hasMany(Comment, {key : 'comments'})
+    });
+
+    var p = new Post();
+    p.get('comments').addObject(new Comment({}));
+    ok(p.get('comments.length'), 'record added');
+    p.get('comments.firstObject').set('isDeleted', true);
+    ok(!p.get('comments.length'), 'record removed');
+});
