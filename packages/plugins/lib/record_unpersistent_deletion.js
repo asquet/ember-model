@@ -249,7 +249,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   },
   
   isDirty: function() {
-    var originalContent = Em.get(this, 'originalContent'),
+    var originalContent = Em.get(this, 'originalContent') || [],
         originalContentLength = Em.get(originalContent, 'length'),
         content = Em.get(this, 'content').rejectBy('record.isDeleted'),
         contentLength = Em.get(content, 'length');
