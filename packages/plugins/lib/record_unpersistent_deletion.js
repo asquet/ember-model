@@ -105,6 +105,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   },
   
   save : function(func) {
+    var that = this;
 	return Em.RSVP.all(this.get('content').map(function(item) {
 		if (func && !item.record.get('isDeleted')) {
 			return item.record.save().then(function() {
@@ -113,12 +114,17 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 		} else {
 			return item.record.save();
 		}
-	}));
+	})).then(function() {
+        var parent = Em.get(that, 'parent'), relationshipKey = Em.get(that, 'relationshipKey');
+        that._setupOriginalContent(that.get('content'));
+        parent._relationshipBecameClean(relationshipKey);
+    });
   },
   
   saveSequential : function(func) {
 	var promise = new Em.RSVP.Promise(function(r){r();});
 	var content = this.get('content');
+    var that = this;
 	return content.reduce(function(promise, item) {
 			return promise.then(function(){
 				if (func && !item.record.get('isDeleted')) {
@@ -129,7 +135,11 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 					return item.record.save();
 				}
 			});
-	}, promise);
+	}, promise).then(function() {
+        var parent = Em.get(that, 'parent'), relationshipKey = Em.get(that, 'relationshipKey');
+        that._setupOriginalContent(that.get('content'));
+        parent._relationshipBecameClean(relationshipKey);
+    });
   },
   
   //--- reloaded ember-model methods

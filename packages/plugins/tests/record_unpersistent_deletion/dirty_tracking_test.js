@@ -130,3 +130,89 @@ test("reverting record with hasManys", function() {
         start();
     });
 });
+
+test("saving has many makes it clean", function() {
+    expect(4);
+    var ID = 1;
+    var adapter = Em.RESTAdapterExt.extend({
+        loadHasMany : function() {
+            return [];
+        },
+        ajax : function() {
+            return new Promise(function(resolve) {resolve({id : ID++});});
+        }
+    }).create();
+
+    var Comment = Em.Model.extend({
+        isRequested : true
+    });
+    Comment.adapter = adapter;
+
+    var Post = Em.Model.extend({
+        isRequested : true,
+        comments : Em.hasMany(Comment, {key : 'comments'})
+    });
+    Post.adapter = adapter;
+
+    var post = Post.create({id : 0, isNew : false});
+
+    ok(!post.get('isDirty'), 'object is clean at first');
+    post.get('comments').addObject(Comment.create());
+    ok(post.get('isDirty'), 'object is dirty after adding object');
+
+    stop();
+    post.get('comments').save(function(d) {
+        ok(d.id, 'callback called after save');
+    }).then(function() {
+        ok(!post.get('isDirty'), 'object is clean at last');
+        start();
+    });
+});
+
+test("after saveSequential has many is clean", function() {
+    expect(9);
+    var ID = 1;
+    var sequenceCheck = true;
+    var adapter = Em.RESTAdapterExt.extend({
+        loadHasMany : function() {
+            return [];
+        },
+        ajax : function() {
+            ok(sequenceCheck, 'sequenceCheck is true before creating promise')
+            sequenceCheck = false;
+            return new Promise(function(resolve) {
+                setTimeout(function(){
+                    ok(!sequenceCheck, 'sequenceCheck is still false before resolving promise')
+                    sequenceCheck = true;
+                    resolve({id : ID++});
+                }, 200);
+            });
+        }
+    }).create();
+
+    var Comment = Em.Model.extend({
+        isRequested : true
+    });
+    Comment.adapter = adapter;
+
+    var Post = Em.Model.extend({
+        isRequested : true,
+        comments : Em.hasMany(Comment, {key : 'comments'})
+    });
+    Post.adapter = adapter;
+
+    var post = Post.create({id : 0, isNew : false});
+
+    ok(!post.get('isDirty'), 'object is clean at first');
+    post.get('comments').addObject(Comment.create());
+    post.get('comments').addObject(Comment.create());
+    ok(post.get('isDirty'), 'object is dirty after adding object');
+
+    stop();
+    post.get('comments').saveSequential(function(d) {
+        ok(d.id, 'callback called after save of each object (2 objects=2 calls)');
+    }).then(function() {
+        ok(!post.get('isDirty'), 'object is clean at last');
+        start();
+    });
+});
