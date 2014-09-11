@@ -69,3 +69,89 @@ test("makeLoadableArrayProp - requested, transformed and pocked observer", funct
     obj.get('loadable');
 
 });
+
+test("reloadProp - refreshes value", function() {
+    expect(3);
+
+    var MyModel = Em.Model.extend({
+        loadable : Em.Model.makeLoadableProp('loadable', 'loadable_path')
+    });
+    MyModel.url = "model";
+	
+		var count1 = 0;
+		MyModel.adapter = Ember.RESTAdapterExt.extend({
+			callRestOnObject: function (record, action, method, data, settings) {
+				var p = new Em.RSVP.Promise(function (resolve) {
+					count1++;
+					resolve(count1);
+				});
+				return p;
+			}
+		}).create();
+	
+
+    var obj = MyModel.create({
+        id : 1
+    });
+    stop();
+    var t = setTimeout(function(){
+	start()
+	}, 650);
+	var count2 = 0;
+    Em.addObserver(obj, 'loadable', function(res){
+		if (obj.get('loadable')==undefined) return;
+		count2++;
+        equal(obj.get('loadable'), count2, 'value loaded correctly');
+		if (count2 == 3) {
+			clearTimeout(t);
+			start();
+		} else {
+			obj.reloadProp('loadable');
+		}
+    });
+    obj.get('loadable');
+
+});
+
+test("reloadProp - array - refreshes value", function() {
+    expect(3);
+
+    var MyModel = Em.Model.extend({
+        loadable : Em.Model.makeLoadableArrayProp('loadable', 'loadable_path')
+    });
+    MyModel.url = "model";
+	
+		var count1 = 0;
+		MyModel.adapter = Ember.RESTAdapterExt.extend({
+			callRestOnObject: function (record, action, method, data, settings) {
+				var p = new Em.RSVP.Promise(function (resolve) {
+					count1++;
+					resolve([{val:count1}]);
+				});
+				return p;
+			}
+		}).create();
+	
+
+    var obj = MyModel.create({
+        id : 1
+    });
+    stop();
+    var t = setTimeout(function(){
+	start()
+	}, 650);
+	var count2 = 0;
+    Em.addObserver(obj, 'loadable', function(res){
+		if (!obj.get('loadable.length')) return;
+		count2++;
+        equal(obj.get('loadable.firstObject.val'), count2, 'value loaded correctly');
+		if (count2 == 3) {
+			clearTimeout(t);
+			start();
+		} else {
+			obj.reloadProp('loadable');
+		}
+    });
+    obj.get('loadable');
+
+});
