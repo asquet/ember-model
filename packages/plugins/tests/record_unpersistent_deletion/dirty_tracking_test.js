@@ -59,7 +59,7 @@ test("adding and deleting old and new objects in  hasManys sets isDirty correctl
     ok(!obj.get('isDirty'), 'object with no changes is clean');
 
     stop();
-    var t = setTimeout(function(){start()}, 1000);
+    var t = setTimeout(function(){start()}, 650);
     Em.loadPromise(obj.get('comments')).then(function() {
         ok(!obj.get('isDirty'), 'object is not dirty when hasMany array loads');
         var c = app.Comment.create({});
@@ -87,7 +87,7 @@ test("when one of hasManys gets dirty, parent isDirty should be true", function(
     var obj = app.Post.find(1);
 
     stop();
-    var t = setTimeout(function(){start()}, 1000);
+    var t = setTimeout(function(){start()}, 650);
     Em.loadPromise(obj.get('comments')).then(function() {
         obj.get('comments.firstObject.author');
 
@@ -110,7 +110,7 @@ test("reverting record with hasManys", function() {
     var obj = app.Post.find(1);
 
     stop();
-    var t = setTimeout(function(){start()}, 1000);
+    var t = setTimeout(function(){start()}, 650);
     Em.loadPromise(obj.get('comments')).then(function() {
         obj.get('comments').pushObject(app.Comment.create({}));
         ok(obj.get('isDirty'), 'adding object to hasMany makes object dirty');
@@ -139,7 +139,7 @@ test("saving has many makes it clean", function() {
             return [];
         },
         ajax : function() {
-            return new Promise(function(resolve) {resolve({id : ID++});});
+            return new Em.RSVP.Promise(function(resolve) {resolve({id : ID++});});
         }
     }).create();
 
@@ -180,12 +180,12 @@ test("after saveSequential has many is clean", function() {
         ajax : function() {
             ok(sequenceCheck, 'sequenceCheck is true before creating promise')
             sequenceCheck = false;
-            return new Promise(function(resolve) {
+            return new Em.RSVP.Promise(function(resolve) {
                 setTimeout(function(){
                     ok(!sequenceCheck, 'sequenceCheck is still false before resolving promise')
                     sequenceCheck = true;
                     resolve({id : ID++});
-                }, 200);
+                }, 50);
             });
         }
     }).create();

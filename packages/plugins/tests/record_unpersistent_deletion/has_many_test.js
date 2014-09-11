@@ -15,7 +15,7 @@ test('get hasMany correctly requests data. checked with loadPromise', function()
                 var response = [{id : 1}, {id: 2}];
                 Ember.run(collection, collection.loadData, type, response);
                 collection.notifyLoaded();
-            }, 500);
+            }, 50);
 
             return [];
         }
@@ -63,7 +63,7 @@ test('get hasMany does not count records with isDeleted===true', function() {
                 var response = [{id : 1}, {id: 2}];
                 Ember.run(collection, collection.loadData, type, response);
                 collection.notifyLoaded();
-            }, 500);
+            }, 50);
 
             return [];
         }

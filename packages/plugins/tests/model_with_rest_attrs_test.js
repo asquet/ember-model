@@ -25,7 +25,7 @@ test("makeLoadableProp - created, requested, transformed and pocked observer", f
         id : 1
     });
     stop();
-    var t = setTimeout(function(){start()}, 1000);
+    var t = setTimeout(function(){start()}, 650);
     Em.addObserver(obj, 'loadable', function(){
         equal(obj.get('loadable'), 'loadable_path requested correctly and then transformed');
         clearTimeout(t);
@@ -54,7 +54,7 @@ test("makeLoadableArrayProp - requested, transformed and pocked observer", funct
         id : 1
     });
     stop();
-    var t = setTimeout(function(){start()}, 1000);
+    var t = setTimeout(function(){start()}, 650);
     Em.addObserver(obj, 'loadable.@each', function(){
         if (obj.get('loadable.length')) {
             equal(obj.get('loadable.firstObject.d'), 'loadable_path requested correctly');
