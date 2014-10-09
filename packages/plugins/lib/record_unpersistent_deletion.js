@@ -117,6 +117,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 	})).then(function() {
         var parent = Em.get(that, 'parent'), relationshipKey = Em.get(that, 'relationshipKey');
         that._setupOriginalContent(that.get('content'));
+		that.set('isLoaded', true);
         parent._relationshipBecameClean(relationshipKey);
     });
   },

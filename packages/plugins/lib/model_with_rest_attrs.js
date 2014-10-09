@@ -71,6 +71,22 @@ Ember.Model.reopenClass({
 			}
 			
 		}.property(fakePropname+'.@each');
+	},
+});
+Ember.Model.reopen({
+	reloadProp : function(propName) {
+		this.set(propName, undefined);
+		var that = this;
+		var p = new Em.RSVP.Promise(function(resolve, reject){
+			var t = setTimeout(reject, 1000);
+			that.one(propName, function() {
+				clearTimeout(t);
+				resolve(that.get(propName));
+			});
+		});
+		
+		that.notifyPropertyChange(propName);
+		return p;
 	}
 
 });
