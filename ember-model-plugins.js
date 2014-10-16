@@ -241,7 +241,9 @@ Ember.Model
     .reopen({
       getHasMany : function(key, type, meta) {
         var embedded = meta.options.embedded, collectionClass = embedded ? Ember.EmbeddedHasManyArray
-            : Ember.DeletableHasManyArray;
+            : Ember.HasManyArray;
+
+        //if (Em.get(type, 'isRequested')) collectionClass = Ember.DeletableHasManyArray;
 
         var collection = collectionClass.create({
           parent : this,

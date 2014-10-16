@@ -2,6 +2,29 @@
 
 Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 
+  _applyListeners : function(ref) {
+	if (Em.typeOf(ref) == 'instance') ref = ref._reference;
+	
+	if (!ref.record) ref.record = this._materializeRecord(ref);
+	
+	ref.record.get('isDirty');ref.record.get('isDeleted');//initListeners
+	
+	Ember.addObserver(ref, 'record.isDirty', this, 'recordStateChanged');
+	Ember.addObserver(ref, 'record.isDeleted', this, 'recordStateChanged');
+	Ember.addObserver(ref.record, 'isDeleted', this, 'contentItemFilterPropertyDidChange');
+	
+	var isDirtyRecord = ref.record.get('isDirty'), isNewRecord = ref.record.get('isNew');
+	if (isDirtyRecord || isNewRecord) { this._modifiedRecords.pushObject(ref); }
+	return ref;
+	
+  },
+  _stripListeners : function(ref) {
+    if (Em.typeOf(ref) == 'instance') ref = ref._reference;
+
+	Ember.removeObserver(ref, 'record.isDirty', this, 'recordStateChanged');
+	Ember.removeObserver(ref, 'record.isDeleted', this, 'recordStateChanged');	  
+	Ember.removeObserver(ref.record, 'isDeleted', this, 'contentItemFilterPropertyDidChange');
+  },
   //--  arrangedContent controlling
   
   arrangedContent : function() {
@@ -11,13 +34,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
     if (!content)return arrCnt;
 	var that = this;
 	content.forEach(function(item) {
-	  if (!item.record) {
-		item.record = that._materializeRecord(item);
-		Ember.addObserver(item, 'record.isDirty', that, 'recordStateChanged');
-		Ember.addObserver(item, 'record.isDeleted', that, 'recordStateChanged');
-		Em.get(item, 'record.isDirty');
-	  }
-	  item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
+	  that._applyListeners(item);
 
       if (!item.record.get('isDeleted')) {
         arrCnt.push(item);
@@ -25,7 +42,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
     });
     
     return arrCnt;
-  }.property('content'),
+  }.property('content.@each.isDeleted'),
 
   contentItemFilterPropertyDidChange : function (item){
     item = this.getReferenceByRecord(item);
@@ -46,7 +63,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
     var that = this;
     addedObjects.forEach(function(item) {
       that.addOrRemoveItem(item);
-      item.record.addObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
+      that._applyListeners(item);
     });
     this._super(array, idx, removedCount, addedCount);	
 	
@@ -58,38 +75,25 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 	var that = this;
     removedObjects.forEach ( function(item) {
       that.get('arrangedContent').removeObject(item);
-      item.record.removeObserver('isDeleted', that, 'contentItemFilterPropertyDidChange');
+      that._stripListeners(item);
     });
     this._super(array, idx, removedCount, addedCount);
-	
   },
   
   addObject : function(obj) {
-    if (!obj.record) {
-		obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'));
-		Ember.addObserver(obj, 'record.isDirty', this, 'recordStateChanged');
-		Ember.addObserver(obj, 'record.isDeleted', this, 'recordStateChanged');
-		Em.get(obj, 'record.isDirty');
-		
-	}//TODO change id to "get primary key"
+    obj = this._applyListeners(obj);
+	
     this.get('content').addObject(obj);
   },
   pushObject : function(obj) {
-    if (!obj.record) {
-		obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'))
-		Ember.addObserver(obj, 'record.isDirty', this, 'recordStateChanged');
-		Ember.addObserver(obj, 'record.isDeleted', this, 'recordStateChanged');
-		Em.get(obj, 'record.isDirty');
-	}//TODO change id to "get primary key"
+	obj = this._applyListeners(obj);
+	
     this.get('content').pushObject(obj);
   },
   
   removeObject : function(obj) {
-	if (!obj.record) {
-		obj = obj._reference || obj._getOrCreateReferenceForId(obj.get('id'));
-		Ember.removeObserver(obj, 'record.isDirty', this, 'recordStateChanged');
-		Ember.removeObserver(obj, 'record.isDeleted', this, 'recordStateChanged');
-	}//TODO change id to "get primary key"
+	this._stripListeners(obj);
+
     this.get('content').removeObject(obj);
   },
   
@@ -101,6 +105,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   },
   
   save : function(func) {
+    var that = this;
 	return Em.RSVP.all(this.get('content').map(function(item) {
 		if (func && !item.record.get('isDeleted')) {
 			return item.record.save().then(function() {
@@ -109,12 +114,18 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 		} else {
 			return item.record.save();
 		}
-	}));
+	})).then(function() {
+        var parent = Em.get(that, 'parent'), relationshipKey = Em.get(that, 'relationshipKey');
+        that._setupOriginalContent(that.get('content'));
+		that.set('isLoaded', true);
+        parent._relationshipBecameClean(relationshipKey);
+    });
   },
   
   saveSequential : function(func) {
 	var promise = new Em.RSVP.Promise(function(r){r();});
 	var content = this.get('content');
+    var that = this;
 	return content.reduce(function(promise, item) {
 			return promise.then(function(){
 				if (func && !item.record.get('isDeleted')) {
@@ -125,7 +136,11 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 					return item.record.save();
 				}
 			});
-	}, promise);
+	}, promise).then(function() {
+        var parent = Em.get(that, 'parent'), relationshipKey = Em.get(that, 'relationshipKey');
+        that._setupOriginalContent(that.get('content'));
+        parent._relationshipBecameClean(relationshipKey);
+    });
   },
   
   //--- reloaded ember-model methods
@@ -143,16 +158,11 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
     var record = this.materializeRecord(idx, this.container);
     
     if (observerNeeded) {
-      var isDirtyRecord = record.get('isDirty'), isNewRecord = record.get('isNew');
-      if (isDirtyRecord || isNewRecord) { this._modifiedRecords.pushObject(content[idx]); }
-      Ember.addObserver(content[idx], 'record.isDirty', this, 'recordStateChanged');
-	  Ember.addObserver(content[idx], 'record.isDeleted', this, 'recordStateChanged');
-	  Em.get(content[idx], 'record.isDirty');
+	  this._applyListeners(content[idx]);
       record.registerParentHasManyArray(this);
     }
 
     return record;
-	
   },
 
   _materializeRecord : function(reference) {
@@ -175,42 +185,32 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
     return this._materializeRecord(reference);
   },
   
+  reload : function() {
+    throw new Error('not implemented for DeletableHasManyArray');
+  },
+  
   /* dirtying */
   
   loadData : function(klass,data) {
-    for (var i=0; i<this.get('content.length'); i++){
-      var obj = this.get('content')[i];
-      Ember.removeObserver(obj, 'record.isDirty', this, 'recordStateChanged');
-      Ember.removeObserver(obj, 'record.isDeleted', this, 'recordStateChanged');
-    }
+	  for (var i=this.get('content.length'); i--;){
+		  this.removeObject(this.get('content')[i]);
+      }
+      klass.load(data);
+      var d=[];
+      for (var i=0; i<data.length; i++){
+          var item = data[i];
+		  var ref = item._reference || klass._getOrCreateReferenceForId(Em.get(item, 'id'))
+		  this._applyListeners(ref);
+		  
+          d.push(ref);
+      }
 
-    klass.load(data);
-    var d=[];
-    for (var i=0; i<data.length; i++){
-      var item = data[i];
-      var ref = item._reference || klass._getOrCreateReferenceForId(Em.get(item, 'id'))
-
-      Ember.addObserver(ref, 'record.isDirty', this, 'recordStateChanged');
-      Ember.addObserver(ref, 'record.isDeleted', this, 'recordStateChanged');
-      Em.get(ref, 'record.isDirty');
-      d.push(ref);
-    }
-
-    this._setupOriginalContent(d);
-    this.load(d);
+      this._setupOriginalContent(d);
+      this.load(d);
   },
   
   arrayWillChange: function(item, idx, removedCnt, addedCnt) {
-    var content = item;
-    for (var i = idx; i < idx+removedCnt; i++) {
-      var currentItem = content[i];
-      if (currentItem && currentItem.record) {
-        this._modifiedRecords.removeObject(currentItem);
-        currentItem.record.unregisterParentHasManyArray(this);
-        Ember.removeObserver(currentItem, 'record.isDirty', this, 'recordStateChanged');
-		Ember.removeObserver(currentItem, 'record.isDeleted', this, 'recordStateChanged');
-      }
-    }
+   
   },
   
   arrayDidChange: function(item, idx, removedCnt, addedCnt) {
@@ -223,9 +223,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
       if (currentItem && currentItem.record) { 
         var isDirtyRecord = currentItem.record.get('isDirty'), isNewRecord = currentItem.record.get('isNew'); // why newly created object is not dirty?
         if (isDirtyRecord || isNewRecord) { this._modifiedRecords.pushObject(currentItem); }
-        Ember.addObserver(currentItem, 'record.isDirty', this, 'recordStateChanged');
-		Ember.addObserver(currentItem, 'record.isDeleted', this, 'recordStateChanged');
-		Em.get(currentItem, 'record.isDirty');
+        this._applyListeners(currentItem);
         currentItem.record.registerParentHasManyArray(this);
       }
     }
@@ -240,7 +238,17 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   recordStateChanged: function(obj, keyName) {
     var parent = Em.get(this, 'parent'), relationshipKey = Em.get(this, 'relationshipKey');    
 
-    if (obj.record.get('isDirty') || obj.record.get('isDeleted')) {
+	if (obj.record.get('isDeleted')) {
+		if (Em.get(this, 'originalContent').indexOf(obj)>-1) {
+			if (this._modifiedRecords.indexOf(obj) === -1) { this._modifiedRecords.pushObject(obj); } 
+			parent._relationshipBecameDirty(relationshipKey);
+		} else {
+			if (this._modifiedRecords.indexOf(obj) > -1) { this._modifiedRecords.removeObject(obj); }
+			if (!this.get('isDirty')) {
+			  parent._relationshipBecameClean(relationshipKey); 
+			}
+		}
+	} else if (obj.record.get('isDirty')) {
       if (this._modifiedRecords.indexOf(obj) === -1) { this._modifiedRecords.pushObject(obj); }
       parent._relationshipBecameDirty(relationshipKey);
     } else {
@@ -254,7 +262,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   isDirty: function() {
     var originalContent = Em.get(this, 'originalContent'),
         originalContentLength = Em.get(originalContent, 'length'),
-        content = Em.get(this, 'arrangedContent'),
+        content = Em.get(this, 'content').rejectBy('record.isDeleted'),
         contentLength = Em.get(content, 'length');
 
 	if (!originalContent) return false;
@@ -274,28 +282,46 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
 
     return isDirty;
   }.property('content.[]', 'originalContent.[]', '_modifiedRecords.[]')
+  
+  
 
   
 });
 
 Ember.Model
     .reopen({
-      getHasMany : function(key, type, meta) {
-        var embedded = meta.options.embedded, collectionClass = embedded ? Ember.EmbeddedHasManyArray
-            : Ember.DeletableHasManyArray;
+      getHasMany : function(key, type, meta, container) {
+		var embedded = meta.options.embedded,
+			collectionClass;
+        if (Em.get(this, 'isRequested')) {
+			collectionClass = embedded ? Ember.EmbeddedHasManyArray : Ember.DeletableHasManyArray;
 
-        var collection = collectionClass.create({
-          parent : this,
-          modelClass : type,
-          content : null,
-          embedded : embedded,
-          key : key,
-		  relationshipKey: meta.relationshipKey
-        });
+			var collection = collectionClass.create({
+			  parent : this,
+			  modelClass : type,
+			  content : null,
+			  embedded : embedded,
+			  key : key,
+			  relationshipKey: meta.relationshipKey,
+			  container : container
+			});
+			
+			collection.set('content', this._getHasManyContent(key, type, embedded, collection));
+			collection.set('_modifiedRecords', []);
+		} else {
+			collectionClass = embedded ? Ember.EmbeddedHasManyArray : Ember.HasManyArray;
 
-		collection.set('content', this._getHasManyContent(key, type, embedded, collection));
-		collection.set('_modifiedRecords', []);
-		
+			var collection = collectionClass.create({
+			  parent: this,
+			  modelClass: type,
+			  content: this._getHasManyContent(key, type, embedded),
+			  embedded: embedded,
+			  key: key,
+			  relationshipKey: meta.relationshipKey,
+			  container: container
+			});
+		}
+
         this._registerHasManyArray(collection);
 
         return collection;
@@ -323,20 +349,17 @@ Ember.Model
           return promise;
         }
       },
-	  
-	  suicideOnDelete : function() {
-		if (this.get('isDeleted') && this.get('isNew')) {
-			this.deleteRecord();
-		}
-	  }.observes('isDeleted'),
-	  
+
 	  revert: function() {
 		this.getWithDefault('_dirtyAttributes', []).clear();
-		this.set('isDeleted', false);
 		this.notifyPropertyChange('_data');
-		this._revertUnpersistentHasManys();
+		if (Em.get(this, 'isRequested')) {
+			this.set('isDeleted', false);
+			this._revertUnpersistentHasManys();
+		} else {
+			this._reloadHasManys(true);
+		}
 	  },
-	  
 	  _revertUnpersistentHasManys : function() {
 		if (!this._hasManyArrays) { return; }
 		var i, j;
@@ -350,4 +373,19 @@ Ember.Model
 
     });
 	
-	
+	Ember.Model.reopenClass({
+	 reload: function(id, container) {
+	    var record = this.cachedRecordForId(id, container);
+		record.set('isLoaded', false);
+		if (Em.get(this, 'isRequested')) {
+			return this._fetchById(record, id).then(function() {
+				if (record._hasManyArrays) {
+					record._hasManyArrays.forEach(function(item){item.set('content',null);});//clear hasManys, so that they would reload
+					record._reloadHasManys();
+				}
+			});
+		} else {
+			return this._fetchById(record, id);
+		}
+	  }
+	});

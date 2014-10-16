@@ -1103,12 +1103,7 @@ Ember.Model.reopenClass({
   reload: function(id, container) {
     var record = this.cachedRecordForId(id, container);
     record.set('isLoaded', false);
-    return this._fetchById(record, id).then(function() {
-		if (record._hasManyArrays) {
-			record._hasManyArrays.forEach(function(item){item.set('content',null);});//clear hasManys, so that they would reload
-			record._reloadHasManys();
-		}
-	});
+    return this._fetchById(record, id);
   },
 
   _fetchById: function(record, id) {
@@ -1152,7 +1147,7 @@ Ember.Model.reopenClass({
     this._currentBatchRecordArrays = null;
     this._currentBatchDeferreds = null;
     
-    if (!batchIds) return;
+//    if (!batchIds) return;
     for (i = 0; i < batchIds.length; i++) {
       if (!this.cachedRecordForId(batchIds[i]).get('isLoaded')) {
         requestIds.push(batchIds[i]);

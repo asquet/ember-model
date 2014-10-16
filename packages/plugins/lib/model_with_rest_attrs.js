@@ -52,19 +52,16 @@ Ember.Model.reopenClass({
 					this.callRestOnObject(restFunc).then(function(data) {
 						var d = [];
 						if (transformFunc) {
-							for (var i in data) {
-								d.push(transformFunc(i, data[i]));
-							}
+							data.forEach(function(item, i){
+								d.push(transformFunc(i, item));
+							});
 						} else {
 							d = data;
 						}
-						data = d.sort(function(a, b) {
-							return a.id - b.id;
-						});
-						
-						data.forEach(function(item) {
-							that.get(fakePropname).addObject(item);
-						});
+
+						that.get(fakePropname).addObjects(d.sort(function(a, b) {
+                            return a.id - b.id;
+                        }));
 					});
 				}
 				return this.get(fakePropname);
@@ -74,6 +71,22 @@ Ember.Model.reopenClass({
 			}
 			
 		}.property(fakePropname+'.@each');
+	},
+});
+Ember.Model.reopen({
+	reloadProp : function(propName) {
+		this.set(propName, undefined);
+		var that = this;
+		var p = new Em.RSVP.Promise(function(resolve, reject){
+			var t = setTimeout(reject, 1000);
+			that.one(propName, function() {
+				clearTimeout(t);
+				resolve(that.get(propName));
+			});
+		});
+		
+		that.notifyPropertyChange(propName);
+		return p;
 	}
 
 });

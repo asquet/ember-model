@@ -10,7 +10,7 @@ Ember.ManyArray = Ember.RecordArray.extend({
     get(this, 'content').removeObject(obj);
 
     var originalObj = (get(this, 'originalContent') || []).findBy('clientId', record._reference.clientId);
-    if (originalObj) get(this, 'originalContent').removeObject(originalObj);
+    get(this, 'originalContent').removeObject(originalObj);
   },
 
   isDirty: function() {
@@ -69,8 +69,10 @@ Ember.ManyArray = Ember.RecordArray.extend({
 
     this._super(index, removed, added);
   },
-  
-  /*_contentWillChange: function() {
+
+  _contentWillChange: function() {
+	if (get(this, 'modelClass.isRequested')) return;
+	
     var content = get(this, 'content');
 
     if (content) {
@@ -81,13 +83,13 @@ Ember.ManyArray = Ember.RecordArray.extend({
   }.observesBefore('content'),
 
   _contentDidChange: function() {
+	if (get(this, 'modelClass.isRequested')) return;
     var content = get(this, 'content');
     if (content) {
       content.addArrayObserver(this);
       this.arrayDidChange(content, 0, 0, get(content, 'length'));
     }
   }.observes('content'),
-  */
 
   arrayWillChange: function(item, idx, removedCnt, addedCnt) {
     var content = item;
@@ -100,7 +102,7 @@ Ember.ManyArray = Ember.RecordArray.extend({
       }
     }
   },
-  
+
   arrayDidChange: function(item, idx, removedCnt, addedCnt) {
     var parent = get(this, 'parent'), relationshipKey = get(this, 'relationshipKey'),
         isDirty = get(this, 'isDirty');
@@ -115,7 +117,6 @@ Ember.ManyArray = Ember.RecordArray.extend({
         currentItem.record.registerParentHasManyArray(this);
       }
     }
-
     if (isDirty) {
       parent._relationshipBecameDirty(relationshipKey);
     } else {
@@ -139,16 +140,15 @@ Ember.ManyArray = Ember.RecordArray.extend({
     content = content || get(this, 'content');
     if (content) {
       set(this, 'originalContent', content.slice());
+    } else {
+      set(this, 'originalContent', []);
     }
     set(this, '_modifiedRecords', []);
   },
 
   init: function() {
     this._super();
-	var klass = get(this, 'modelClass');
-    if (!get(klass, 'isRequested')) {
-		this._setupOriginalContent();
-	}
+	this._setupOriginalContent();
     this._contentDidChange();
   },
 

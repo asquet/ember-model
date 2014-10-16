@@ -1,9 +1,10 @@
 var ID=-1;
 Ember.FixtureAdapterExt = Ember.FixtureAdapter.extend({
 	_getHasMany : function(klass, id, collName, collClass) {
-		var fixtures = klass.FIXTURES_HM,
-			ids = (fixtures[id]?fixtures[id][collName]:[]) || [],
-			requestedData = []
+		var fixtures = klass.FIXTURES_HM, ids, requestedData = [];
+		if (!fixtures) return [];
+		ids = (fixtures[id]?fixtures[id][collName]:[]) || [];
+			
 		for (var i = 0, l = ids.length; i < l; i++) {
 			requestedData.push(this._findData(collClass, ids[i]));
 		}
@@ -11,8 +12,6 @@ Ember.FixtureAdapterExt = Ember.FixtureAdapter.extend({
 	},
 
 	loadHasMany : function(record, propName, type, collection) {
-        var content = [];
-		
 		var data = this._getHasMany(record.constructor, Ember.get(record, record.get('constructor.primaryKey')), propName, type);
 		
 		Em.run.later(this,function() {
@@ -20,7 +19,7 @@ Ember.FixtureAdapterExt = Ember.FixtureAdapter.extend({
 			Ember.run(collection, collection.notifyLoaded);
 		}, 500);
 
-        return content;
+        return [];
     },
 	
 	createRecord: function(record) {
