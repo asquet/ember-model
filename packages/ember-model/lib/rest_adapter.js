@@ -162,7 +162,7 @@ Ember.RESTAdapter = Ember.Adapter.extend({
 
   _loadRecordFromData: function(record, data) {
     var rootKey = get(record.constructor, 'rootKey'),
-        primaryKey = get(record.constructor, 'primaryKey'),
+		primaryKey = get(record.constructor, 'primaryKey'),
         dataToLoad = rootKey ? get(data, rootKey) : data;
     if (!Ember.isEmpty(dataToLoad)) {
       record.load(dataToLoad[primaryKey], dataToLoad, true);
