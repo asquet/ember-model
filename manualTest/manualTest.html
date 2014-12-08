@@ -70,61 +70,61 @@
 	<form role="form">
 	  <div class="form-group">
 		<label >Name</label>
-		{{view Em.TextField valueBinding="name" classNames="form-control" }}
+		{{view Em.TextField value=name classNames="form-control" }}
 	  </div>
 	  <div class="form-group">
 		<label >Birth Date</label>
-		{{view Em.TextField valueBinding="birthDate" classNames="form-control" }}
+		{{view Em.TextField value=birthDate classNames="form-control" }}
 	  </div>
 	  <div class="form-group">
 		<label >Salary</label>
-		{{view Em.TextField valueBinding="salary" classNames="form-control" }}
+		{{view Em.TextField value=salary classNames="form-control" }}
 	  </div>
 	  
 	  <div class="form-group">
 		<label >Position</label>
 		{{view Ember.Select
-					   contentBinding="App.stores.positions"
+					   content=App.stores.positions
 					   optionValuePath="content.id"
 					   optionLabelPath="content.name"
 					   prompt="select position"
-					   selectionBinding=position}}
+					   selection=position}}
 	  </div>
 	  <div class="form-group">
 		<label >manager</label>
 		{{view Ember.Select
-					   contentBinding="App.stores.users"
+					   content=App.stores.users
 					   optionValuePath="content.id"
 					   optionLabelPath="content.name"
 					   prompt="select user"
-					   selectionBinding=manager}}
+					   selection=manager}}
 	  </div>
 	  
 	  <ul>
 		
 		{{#each userRole in model.roles}}
 		  <li>	{{view Ember.Select
-					   contentBinding="App.stores.roles"
+					   content=App.stores.roles
 					   optionValuePath="content.id"
 					   optionLabelPath="content.name"
 					   prompt="select role"
-					   selectionBinding=userRole.role}}
-				<a {{action removeRole userRole}} class="btn"> X </a> isDirty: {{userRole.isDirty}}
+					   selection=userRole.role}}
+				<a {{action 'removeRole' userRole}} class="btn"> X </a> isDirty: {{userRole.isDirty}}
 		  </li>
 		{{/each}}
 	  </ul>
-	  <a {{action addRole}} class="btn"> + </a>
+	  <a {{action 'addRole'}} class="btn"> + </a>
 	  <p>
-		<button {{action save}} class="btn btn-default">Submit</button>
+		<button {{action 'save'}} class="btn btn-default">Submit</button>
 	  </p>
 	</form>
 </script>
 
 <script type="text/x-handlebars" id="users/new">
-	{{partial p_user_edit}}
+	{{partial 'p_user_edit'}}
 </script>
 <script type="text/x-handlebars" id="users/edit">
-	{{partial p_user_edit}}
+	{{partial 'p_user_edit'}}
 </script>
 
 <script type="text/x-handlebars" id="roles/list">
@@ -146,17 +146,17 @@
 	<form role="form">
 	  <div class="form-group">
 		<label >Name</label>
-		{{view Em.TextField valueBinding="name" classNames="form-control" }}
+		{{view Em.TextField value=name classNames="form-control" }}
 	  </div>
-	  <button {{action save}} class="btn btn-default">Submit</button>
+	  <button {{action 'save'}} class="btn btn-default">Submit</button>
 	</form>
 </script>
 
 <script type="text/x-handlebars" id="roles/edit">
-{{partial p_name_edit}}
+{{partial 'p_name_edit'}}
 </script>
 <script type="text/x-handlebars" id="roles/new">
-{{partial p_name_edit}}
+{{partial 'p_name_edit'}}
 </script>
 
 <script type="text/x-handlebars" id="positions/list">
@@ -174,10 +174,10 @@
 </script>
 
 <script type="text/x-handlebars" id="positions/edit">
-{{partial p_name_edit}}
+{{partial 'p_name_edit'}}
 </script>
 <script type="text/x-handlebars" id="positions/new">
-{{partial p_name_edit}}
+{{partial 'p_name_edit'}}
 </script>
 <script>
 	
@@ -214,7 +214,6 @@
             record.load(id, data);
         }
     });
-
 
 </script>
 
