@@ -415,11 +415,11 @@ Ember.Model.reopenClass({
     if (!arguments.length) {
       return this._findFetchAll(true);
     } else if (Ember.isArray(id)) {
-      return this._findFetchMany(id, true);
+      return this._findFetchMany(id, true, this.container);
     } else if (typeof id === 'object') {
-      return this._findFetchQuery(id, true);
+      return this._findFetchQuery(id, true, this.container);
     } else {
-      return this._findFetchById(id, true);
+      return this._findFetchById(id, true, this.container);
     }
   },
 
@@ -427,16 +427,16 @@ Ember.Model.reopenClass({
     if (!arguments.length) {
       return this._findFetchAll(false);
     } else if (Ember.isArray(id)) {
-      return this._findFetchMany(id, false);
+      return this._findFetchMany(id, false, this.container);
     } else if (typeof id === 'object') {
-      return this._findFetchQuery(id, false);
+      return this._findFetchQuery(id, false, this.container);
     } else {
-      return this._findFetchById(id, false);
+      return this._findFetchById(id, false, this.container);
     }
   },
 
   findQuery: function(params) {
-    return this._findFetchQuery(params, false);
+    return this._findFetchQuery(params, false, this.container);
   },
 
   fetchQuery: function(params) {
@@ -452,11 +452,11 @@ Ember.Model.reopenClass({
   },
 
   findMany: function(ids) {
-    return this._findFetchMany(ids, false);
+    return this._findFetchMany(ids, false, this.container);
   },
 
   fetchMany: function(ids) {
-    return this._findFetchMany(ids, true);
+    return this._findFetchMany(ids, true, this.container);
   },
 
   _findFetchMany: function(ids, isFetch, container) {
