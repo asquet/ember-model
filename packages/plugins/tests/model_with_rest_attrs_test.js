@@ -95,22 +95,22 @@ test("reloadProp - refreshes value", function() {
     });
     stop();
     var t = setTimeout(function(){
-	start()
+    	start();
 	}, 650);
 	var count2 = 0;
     Em.addObserver(obj, 'loadable', function(res){
-		if (obj.get('loadable')==undefined) return;
+		if (obj.get('loadable')==oldValue) return;
 		count2++;
         equal(obj.get('loadable'), count2, 'value loaded correctly');
-		if (count2 == 3) {
+		if (count2 >= 3) {
 			clearTimeout(t);
 			start();
 		} else {
+            oldValue = obj.get('loadable');
 			obj.reloadProp('loadable');
 		}
     });
-    obj.get('loadable');
-
+    var oldValue = obj.get('loadable');
 });
 
 test("reloadProp - array - refreshes value", function() {
