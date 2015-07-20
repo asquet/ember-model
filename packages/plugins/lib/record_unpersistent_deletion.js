@@ -5,7 +5,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   _applyListeners : function(ref) {
 	if (Em.typeOf(ref) == 'instance') ref = ref._reference;
 	
-	if (!ref.record) ref.record = this._materializeRecord(ref);
+	if (!ref.record) ref.record = this._materializeRecord(ref, this.container);
 	
 	ref.record.get('isDirty');ref.record.get('isDeleted');//initListeners
 	
@@ -165,7 +165,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
     return record;
   },
 
-  _materializeRecord : function(reference) {
+  _materializeRecord : function(reference,container) {
       var klass = Ember.get(this, 'modelClass');
       var record;
       if (reference.record) {
@@ -174,15 +174,15 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
           record = klass.find(reference.id);
           reference.record = record;
       }
-
+	  if (record) record.container = container;
       return record;
   },
 
-  materializeRecord : function(idx) {
+  materializeRecord : function(idx, container) {
     var content = Ember.get(this, 'arrangedContent'),
         reference = content.objectAt(idx);
 
-    return this._materializeRecord(reference);
+    return this._materializeRecord(reference, container);
   },
   
   reload : function() {

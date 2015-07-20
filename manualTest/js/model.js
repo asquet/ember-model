@@ -1,3 +1,5 @@
+Ember.Model.reopen({'isRequested': true});
+
 App.User = Em.Model.extend({
 	name : Em.attr(),
 	salary : Em.attr(Number),
