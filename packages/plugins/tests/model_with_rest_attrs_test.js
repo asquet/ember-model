@@ -102,7 +102,7 @@ test("reloadProp - refreshes value", function() {
 		if (obj.get('loadable')==oldValue) return;
 		count2++;
         equal(obj.get('loadable'), count2, 'value loaded correctly');
-		if (count2 >= 3) {
+		if (count2 == 3) {
 			clearTimeout(t);
 			start();
 		} else {
