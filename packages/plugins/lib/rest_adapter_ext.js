@@ -77,7 +77,7 @@ Ember.Model.reopenClass({
   //isRequested : true,
   getDefaultRestUrl : function() {
     return this['url'] || this.toString().substring(this.toString().indexOf(':') + 1, this.toString().lastIndexOf(':'))
-        .decamelize() + 's';
+        .underscore() + 's';
   }
 });
   
