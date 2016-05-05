@@ -1,3 +1,4 @@
+require('ember-model/computed');
 var get = Ember.get;
 
 function getType(record) {
@@ -21,18 +22,21 @@ Ember.hasMany = function(type, options) {
 
   var meta = { type: type, isRelationship: true, options: options, kind: 'hasMany', getType: getType};
 
-  return Ember.computed(function(propertyKey, newContentArray, existingArray) {
-    type = meta.getType(this);
-    Ember.assert("Type cannot be empty", !Ember.isEmpty(type));
+  return Ember.Model.computed({
+    get: function(propertyKey) {
+      type = meta.getType(this);
+      Ember.assert("Type cannot be empty", !Ember.isEmpty(type));
 
-    var key = options.key || propertyKey;
-
-    if (arguments.length > 1) {
-      return existingArray.setObjects(newContentArray);
-    } else {
+      var key = options.key || propertyKey;
       return this.getHasMany(key, type, meta, this.container);
+    },
+    set: function(propertyKey, newContentArray, existingArray) {
+      if (!existingArray) {
+        existingArray = this.getHasMany(options.key || propertyKey, type, meta, this.container);
+      }
+      return existingArray.setObjects(newContentArray);
     }
-  }).property().meta(meta);
+  }).meta(meta);
 };
 
 Ember.Model.reopen({

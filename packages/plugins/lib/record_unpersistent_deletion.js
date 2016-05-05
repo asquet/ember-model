@@ -101,7 +101,7 @@ Ember.DeletableHasManyArray = Ember.HasManyArray.extend({
   
   getReferenceByRecord : function(record) {
     var content = this.get('content');
-    return content.findProperty('record', record);
+    return content.findBy('record', record);
   },
   
   save : function(func) {
