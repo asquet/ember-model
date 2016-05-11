@@ -25,7 +25,7 @@ Ember.Model.Store = Ember.Object.extend({
   createRecord: function(type, props) {
     var klass = this.modelFor(type);
     klass.reopenClass({adapter: this.adapterFor(type)});
-    return klass.create(Ember.merge({container: this.container}, props));
+    return klass.create(Object.assign({container: this.container}, props));
   },
 
   find: function(type, id) {
@@ -57,14 +57,19 @@ Ember.Model.Store = Ember.Object.extend({
 });
 
 Ember.onLoad('Ember.Application', function(Application) {
+
   Application.initializer({
     name: "store",
 
-    initialize: function(container, application) {
-      application.register('store:main', container.lookupFactory('store:application') || Ember.Model.Store);
+    initialize: function() {
+      var application = arguments[1] || arguments[0];
+      var store = application.Store || Ember.Model.Store;
+      application.register('store:application', store);
+      application.register('store:main', store);
 
       application.inject('route', 'store', 'store:main');
       application.inject('controller', 'store', 'store:main');
     }
   });
+
 });

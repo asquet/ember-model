@@ -76,8 +76,8 @@ Ember.Model.reopenClass({
   //adapter : Ember.RESTAdapterExt.create(),
   //isRequested : true,
   getDefaultRestUrl : function() {
-    return this['url'] || this.toString().substring(this.toString().lastIndexOf('.') + 1)
-        .decamelize() + 's';
+    return this['url'] || this.toString().substring(this.toString().indexOf(':') + 1, this.toString().lastIndexOf(':'))
+        .underscore() + 's';
   }
 });
   

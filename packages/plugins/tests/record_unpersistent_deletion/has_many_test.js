@@ -1,15 +1,11 @@
 module("Plugins.record_unpersistent_deletion#has_many");
 
 test('get hasMany correctly requests data. checked with loadPromise', function() {
-    expect(4);
+    expect(3);
 
     var adapter = Ember.Adapter.extend({
         namespace : 'rest',
         loadHasMany : function(record, propName, type, collection) {
-            var url = this.namespace + "/" +
-                record.constructor.getDefaultRestUrl() + "/" +
-                record.get('id') + "/" + propName;
-            equal('rest/posts/1/comments', url, 'url for requesting formed');
 
             Em.run.later(this,function() {
                 var response = [{id : 1}, {id: 2}];
