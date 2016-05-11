@@ -19,65 +19,67 @@ Ember.Model.reopenClass({
 
     makeLoadableProp: function (propName, restFunc, transformFunc) {
         var fakePropName = '_' + propName;
-        return Ember.computed(fakePropName, function (key, value) {
-            if (arguments.length >= 2) {
+        return Ember.computed(fakePropName, {
+            get: function(){
+                if (typeof this.get(Em.get(this.constructor, 'primaryKey')) === "undefined") {
+                    return undefined;
+                }
+
+                if (!this.get("_requestedLoadableProps").contains(propName)) {
+                    var that = this;
+
+                    this.get("_requestedLoadableProps").addObject(propName);
+                    this.callRestOnObject(restFunc).then(function (res) {
+                        if (transformFunc) {
+                            res = transformFunc(res);
+                        } else if (res && typeof res == 'object') {
+                            res = emberize(res);
+                        }
+                        that.set(fakePropName, res);
+                        //that.notifyPropertyChange(propName);
+                    });
+                }
+
+                return this.get(fakePropName);
+            },
+            set: function(key, value){
                 this.set(fakePropName, value);
                 return value;
             }
-
-            if (typeof this.get(Em.get(this.constructor, 'primaryKey')) === "undefined") {
-                return undefined;
-            }
-
-            if (!this.get("_requestedLoadableProps").contains(propName)) {
-                var that = this;
-
-                this.get("_requestedLoadableProps").addObject(propName);
-                this.callRestOnObject(restFunc).then(function (res) {
-                    if (transformFunc) {
-                        res = transformFunc(res);
-                    } else if (res && typeof res == 'object') {
-                        res = emberize(res);
-                    }
-                    that.set(fakePropName, res);
-                    //that.notifyPropertyChange(propName);
-                });
-            }
-
-            return this.get(fakePropName);
-
         });
     },
 
     makeLoadableArrayProp: function (propName, restFunc, transformFunc) {
         var fakePropName = '_' + propName;
-        return Ember.computed(fakePropName + '.[]', function (key, value) {
-            if (arguments.length >= 2) {
+
+        return Ember.computed(fakePropName + '.[]', {
+            get: function(){
+                if (!this.get("_requestedLoadableProps").contains(propName)) {
+                    this.get("_requestedLoadableProps").addObject(propName);
+
+                    this.set(fakePropName, []);
+                    var that = this;
+                    this.callRestOnObject(restFunc).then(function (data) {
+                        var d = [];
+                        if (transformFunc) {
+                            data.forEach(function (item, i) {
+                                d.push(transformFunc(i, item));
+                            });
+                        } else {
+                            d = data;
+                        }
+
+                        that.get(fakePropName).addObjects(d.sort(function (a, b) {
+                            return a.id - b.id;
+                        }));
+                    });
+                }
+                return this.get(fakePropName);
+            },
+            set: function (key, value) {
                 this.set(fakePropName, value);
                 return value;
             }
-
-            if (!this.get("_requestedLoadableProps").contains(propName)) {
-                this.get("_requestedLoadableProps").addObject(propName);
-
-                this.set(fakePropName, []);
-                var that = this;
-                this.callRestOnObject(restFunc).then(function (data) {
-                    var d = [];
-                    if (transformFunc) {
-                        data.forEach(function (item, i) {
-                            d.push(transformFunc(i, item));
-                        });
-                    } else {
-                        d = data;
-                    }
-
-                    that.get(fakePropName).addObjects(d.sort(function (a, b) {
-                        return a.id - b.id;
-                    }));
-                });
-            }
-            return this.get(fakePropName);
         });
     }
 });
