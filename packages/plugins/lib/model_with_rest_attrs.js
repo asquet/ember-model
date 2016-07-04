@@ -36,7 +36,7 @@ Ember.Model.reopenClass({
                             res = emberize(res);
                         }
                         that.set(fakePropName, res);
-                        //that.notifyPropertyChange(propName);
+                        that.set(propName, res);
                     });
                 }
 
@@ -44,6 +44,8 @@ Ember.Model.reopenClass({
             },
             set: function(key, value){
                 this.set(fakePropName, value);
+                this.notifyPropertyChange(fakePropName);
+                this.notifyPropertyChange(propName);
                 return value;
             }
         });
