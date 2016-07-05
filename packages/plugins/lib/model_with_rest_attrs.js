@@ -35,8 +35,7 @@ Ember.Model.reopenClass({
                         } else if (res && typeof res == 'object') {
                             res = emberize(res);
                         }
-                        that.set(fakePropName, res);
-                        //that.notifyPropertyChange(propName);
+                        that.set(propName, res);
                     });
                 }
 
@@ -44,6 +43,7 @@ Ember.Model.reopenClass({
             },
             set: function(key, value){
                 this.set(fakePropName, value);
+                if (this[propName]._volatile) this.notifyPropertyChange(propName);
                 return value;
             }
         });
