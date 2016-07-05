@@ -37,6 +37,38 @@ test("makeLoadableProp - created, requested, transformed and pocked observer", f
     obj.get('loadable');
 });
 
+test("makeLoadableProp - created volatile, requested, transformed and pocked observer", function() {
+    expect(1);
+
+    var MyModel = Em.Model.extend({
+        loadable: Em.Model.makeLoadableProp('loadable', 'loadable_path', function (result) {
+            return result + " and then transformed";
+        }).volatile()
+    });
+    MyModel.url = "model";
+    MyModel.adapter = Ember.RESTAdapterExt.extend({
+        callRestOnObject: function (record, action, method, data, settings) {
+            return new Em.RSVP.Promise(function (resolve) {
+                resolve(action + ' requested correctly');
+            });
+        }
+    }).create();
+
+    var obj = MyModel.create({
+        id: 1
+    });
+    stop();
+    var t = setTimeout(function () {
+        start()
+    }, 650);
+    Em.addObserver(obj, 'loadable', function () {
+        equal(obj.get('loadable'), 'loadable_path requested correctly and then transformed');
+        clearTimeout(t);
+        start();
+    });
+    obj.get('loadable');
+});
+
 test("makeLoadableArrayProp - requested, transformed and pocked observer", function () {
     expect(4);
 
